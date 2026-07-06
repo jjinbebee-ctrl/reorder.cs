@@ -1,5 +1,4 @@
-const CUSTOMER_API_URL = 'https://script.google.com/macros/s/AKfycbwd_tjMT6ijMFInn4XGzmQunrT5i6q9JGGGy1fTQhLqjuB66I8haFQbtcyzHvry5l7lcA/exec
-';
+const CUSTOMER_API_URL = 'https://script.google.com/macros/s/AKfycbwd_tjMT6ijMFInn4XGzmQunrT5i6q9JGGGy1fTQhLqjuB66I8haFQbtcyzHvry5l7lcA/exec';
 
 const keywordInput = document.getElementById('keyword');
 const searchButton = document.getElementById('searchButton');
