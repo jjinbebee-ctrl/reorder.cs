@@ -9,7 +9,9 @@ const lastUpdatedEl = document.getElementById('lastUpdated');
 
 let latestResults = [];
 
-searchButton.addEventListener('click', searchRestock);
+if (searchButton) {
+  searchButton.addEventListener('click', searchRestock);
+}
 
 document.addEventListener('keydown', function(event) {
   if (event.key === 'Enter') {
@@ -17,13 +19,15 @@ document.addEventListener('keydown', function(event) {
   }
 });
 
-keywordInput.addEventListener('input', function() {
-  const clearButton = document.querySelector('.clear-btn[data-clear="keyword"]');
+if (keywordInput) {
+  keywordInput.addEventListener('input', function() {
+    const clearButton = document.querySelector('.clear-btn[data-clear="keyword"]');
 
-  if (clearButton) {
-    clearButton.style.display = keywordInput.value.trim() ? 'block' : 'none';
-  }
-});
+    if (clearButton) {
+      clearButton.style.display = keywordInput.value.trim() ? 'block' : 'none';
+    }
+  });
+}
 
 document.querySelectorAll('.clear-btn').forEach(function(button) {
   button.addEventListener('click', function() {
@@ -39,12 +43,12 @@ document.querySelectorAll('.clear-btn').forEach(function(button) {
 });
 
 async function searchRestock() {
-  const keyword = keywordInput.value.trim();
+  const keyword = keywordInput ? keywordInput.value.trim() : '';
 
   if (!keyword) {
-    statusEl.textContent = '상품명 또는 컬러명을 입력해주세요.';
-    resultEl.innerHTML = '<div class="no-result">검색어가 없습니다.</div>';
-    resultInfoEl.textContent = '0건';
+    setText(statusEl, '상품명 또는 컬러명을 입력해주세요.');
+    setText(resultInfoEl, '0건');
+    setHtml(resultEl, '<div class="no-result">검색어가 없습니다.</div>');
     latestResults = [];
     return;
   }
@@ -53,12 +57,15 @@ async function searchRestock() {
     keyword
   });
 
-  searchButton.disabled = true;
-  searchButton.textContent = '조회 중';
-  statusEl.textContent = '재입고 일정을 조회하고 있습니다...';
-  resultEl.innerHTML = '<div class="no-result">조회 중...</div>';
-  resultInfoEl.textContent = '-';
-  lastUpdatedEl.textContent = '조회 중...';
+  if (searchButton) {
+    searchButton.disabled = true;
+    searchButton.textContent = '조회 중';
+  }
+
+  setText(statusEl, '재입고 일정을 조회하고 있습니다...');
+  setText(resultInfoEl, '-');
+  setText(lastUpdatedEl, '조회 중...');
+  setHtml(resultEl, '<div class="no-result">조회 중...</div>');
 
   try {
     const response = await fetch(`${CUSTOMER_API_URL}?${params.toString()}`, {
@@ -68,63 +75,69 @@ async function searchRestock() {
     const data = await response.json();
 
     if (!data.success) {
-      statusEl.textContent = data.message || '조회에 실패했습니다.';
-      resultEl.innerHTML = '<div class="no-result">조회 가능한 재입고 일정이 없습니다.</div>';
-      resultInfoEl.textContent = '0건';
+      setText(statusEl, data.message || '조회에 실패했습니다.');
+      setText(resultInfoEl, '0건');
+      setHtml(resultEl, '<div class="no-result">조회 가능한 재입고 일정이 없습니다.</div>');
       latestResults = [];
       return;
     }
 
     latestResults = data.results || [];
 
-    statusEl.innerHTML = `<strong>${latestResults.length}건</strong> 조회 완료`;
-    lastUpdatedEl.textContent = data.searchedAt ? `마지막 조회: ${data.searchedAt}` : '조회 완료';
+    setHtml(statusEl, `<strong>${latestResults.length}건</strong> 조회 완료`);
+    setText(resultInfoEl, `${latestResults.length}건`);
+    setText(lastUpdatedEl, data.searchedAt ? `마지막 조회: ${data.searchedAt}` : '조회 완료');
 
     renderResults(latestResults);
 
   } catch (error) {
     console.error(error);
-    statusEl.textContent = '오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
-    resultEl.innerHTML = '<div class="no-result">오류가 발생했습니다.</div>';
-    resultInfoEl.textContent = '0건';
+
+    setText(statusEl, '오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    setText(resultInfoEl, '0건');
+    setHtml(resultEl, '<div class="no-result">오류가 발생했습니다.</div>');
   } finally {
-    searchButton.disabled = false;
-    searchButton.textContent = '조회';
+    if (searchButton) {
+      searchButton.disabled = false;
+      searchButton.textContent = '조회';
+    }
   }
 }
 
 function renderResults(items) {
-  resultInfoEl.textContent = `${items.length}건`;
+  setText(resultInfoEl, `${items.length}건`);
 
   if (!items.length) {
-    resultEl.innerHTML = `
+    setHtml(resultEl, `
       <div class="no-result">
         조회 가능한 재입고 일정이 없습니다.<br>
         상품명 또는 컬러명을 다시 확인해주세요.
       </div>
-    `;
+    `);
     return;
   }
 
-  resultEl.innerHTML = `
+  setHtml(resultEl, `
     <div class="result-list">
       ${items.map(item => renderItem(item)).join('')}
     </div>
-  `;
+  `);
 }
 
 function renderItem(item) {
+  const keyword = keywordInput ? keywordInput.value.trim() : '';
+
   return `
     <div class="result-item">
       <div class="result-top">
-        <div class="product-name">${highlightText(item.productName || '-', keywordInput.value.trim())}</div>
+        <div class="product-name">${highlightText(item.productName || '-', keyword)}</div>
         ${renderStatus(item.status)}
       </div>
 
       <div class="info-grid">
         <div class="info-row">
           <span class="info-label">컬러</span>
-          <span class="info-value">${highlightText(item.color || '-', keywordInput.value.trim())}</span>
+          <span class="info-value">${highlightText(item.color || '-', keyword)}</span>
         </div>
 
         <div class="info-row">
@@ -159,11 +172,34 @@ function highlightText(text, keyword) {
   const base = escapeHtml(text || '');
   if (!keyword) return base;
 
-  const safeKeyword = escapeRegExp(escapeHtml(keyword));
-  if (!safeKeyword) return base;
+  const keywords = keyword
+    .split(/[\s,\/]+/)
+    .map(v => v.trim())
+    .filter(Boolean);
 
-  const regex = new RegExp(safeKeyword, 'gi');
-  return base.replace(regex, match => `<mark class="kw-mark">${match}</mark>`);
+  if (!keywords.length) return base;
+
+  let highlighted = base;
+
+  keywords.forEach(function(word) {
+    const safeKeyword = escapeRegExp(escapeHtml(word));
+    if (!safeKeyword) return;
+
+    const regex = new RegExp(safeKeyword, 'gi');
+    highlighted = highlighted.replace(regex, match => `<mark class="kw-mark">${match}</mark>`);
+  });
+
+  return highlighted;
+}
+
+function setText(element, text) {
+  if (!element) return;
+  element.textContent = text;
+}
+
+function setHtml(element, html) {
+  if (!element) return;
+  element.innerHTML = html;
 }
 
 function escapeRegExp(string) {
