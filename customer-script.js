@@ -147,11 +147,13 @@ function renderStatus(status) {
 
   if (status === '입고 예정') {
     cls = 'status-pill-upcoming';
-  } else if (status === '최근 입고 완료') {
+  } else if (status === '최근 입고') {
     cls = 'status-pill-recent';
+  } else if (status === '입고 미정') {
+    cls = 'status-pill-unknown';
   }
 
-  return `<span class="status-pill ${cls}">${escapeHtml(status || '일정 확인 중')}</span>`;
+  return `<span class="status-pill ${cls}">${escapeHtml(status || '입고 미정')}</span>`;
 }
 
 function highlightText(text, keyword) {
